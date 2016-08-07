@@ -8,6 +8,7 @@ import runSequence from "run-sequence";
 import webpack from "webpack";
 import webpackConfig from "./webpack.config";
 import WebpackDevServer from "webpack-dev-server";
+import ghPages from "gulp-gh-pages";
 
 const PORT = process.env.PORT || 8080;
 const $ = gulpLoadPlugins({camelize: true});
@@ -15,6 +16,8 @@ const $ = gulpLoadPlugins({camelize: true});
 // Main tasks
 gulp.task('serve', () => runSequence('serve:clean', 'serve:index', 'serve:start'));
 gulp.task('dist', () => runSequence('dist:clean', 'dist:build', 'dist:index'));
+gulp.task('deploy', () => runSequence('dist:clean', 'dist:build', 'dist:index', 'dist:deploy'));
+
 gulp.task('clean', ['dist:clean', 'serve:clean']);
 gulp.task('open', () => open('http://localhost:8080'));
 
@@ -23,7 +26,7 @@ gulp.task('serve:clean', cb => del('build', {dot: true}, cb));
 gulp.task('dist:clean', cb => del(['dist', 'dist-intermediate'], {dot: true}, cb));
 
 // Copy static files across to our final directory
-gulp.task('serve:static', () => 
+gulp.task('serve:static', () =>
   gulp.src([
     'src/static/**'
   ])
@@ -32,7 +35,7 @@ gulp.task('serve:static', () =>
     .pipe($.size({title: 'static'}))
 );
 
-gulp.task('dist:static', () => 
+gulp.task('dist:static', () =>
   gulp.src([
     'src/static/**'
   ])
@@ -57,11 +60,17 @@ gulp.task('dist:index', () => {
   // Build the index.html using the names of compiled files
   return gulp.src('src/index.html')
     .pipe($.inject(app, {
-      ignorePath: 'dist',
+      ignorePath: '../dist/',
+      relative: true,
       starttag: '<!-- inject:app:{{ext}} -->'
     }))
     .on("error", $.util.log)
     .pipe(gulp.dest('dist'));
+});
+
+gulp.task('dist:deploy', function() {
+  return gulp.src('./dist/**/*')
+    .pipe(ghPages());
 });
 
 // Start a livereloading development server
