@@ -79,7 +79,7 @@ console.log(POWER);
 
     let citiesOfRegion = {};
     for( let i = 0; i < CITIES[this.state.region].length ; i++ ){
-      citiesOfRegion[i] = {label: CITIES[this.state.region][i][0] };
+      citiesOfRegion[i] = { label: CITIES[this.state.region][i][0] };
     }
 
 
