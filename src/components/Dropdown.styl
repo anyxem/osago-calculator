@@ -1,0 +1,40 @@
+.calculator-osago
+  .dropdown
+    position relative
+    .dropdown-label
+      border 1px solid #dadde0
+      padding 17px 20px 18px 19px
+      background-image url(/assets/ar-black-down.png)
+      background-repeat no-repeat
+      background-position top 50% right 19px
+      white-space nowrap
+      overflow hidden
+    .dropdown-options
+      display none
+      position: absolute;
+      box-shadow: 0 10px 45px rgba(0,0,0,0.2);
+      padding: 10px 10px;
+      width: 100%;
+      background: #fff;
+      z-index: 10;
+      margin-top: 10px;
+      max-height: 400px
+      ul
+        list-style-type: none
+        padding 0
+        margin 0
+        max-height: 380px
+        overflow auto
+        padding 0 20px
+        li
+          text-decoration none
+          cursor: pointer;
+          margin 16px 0
+          color #8996ab
+          &:hover
+            color #333333
+          &.selected
+            color #30a213
+    &.open
+      .dropdown-options
+        display block

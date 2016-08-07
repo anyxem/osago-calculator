@@ -1,0 +1,81 @@
+.calculator-osago
+  /* Base for label styling */
+  [type="checkbox"]:not(:checked),
+  [type="checkbox"]:checked {
+    position: absolute;
+    left: -9999px;
+  }
+  [type="checkbox"]:not(:checked) + label,
+  [type="checkbox"]:checked + label {
+    position: relative;
+    padding-left: 36px;
+    cursor: pointer;
+    display inline-block
+    text-align left
+    font-size 14px
+    padding-top 5px
+    color #352a0f
+  }
+
+  /* checkbox aspect */
+  [type="checkbox"]:not(:checked) + label:before,
+  [type="checkbox"]:checked + label:before {
+    content: '';
+    position: absolute;
+    left:0; top: 2px;
+    width: 22px; height: 22px;
+    border: 1px solid #dadde0;
+    background: #ffffff;
+    border-radius: 3px;
+    outline: none;
+    box-sizing: border-box;
+  }
+  /* checked mark aspect */
+  [type="checkbox"]:not(:checked) + label:after,
+  [type="checkbox"]:checked + label:after {
+    content: '';
+    width 10px
+    height 8px
+    background-image url(/assets/vmark.green.png)
+    position: absolute;
+    top: 9px; left: 7px;
+    font-size: 18px;
+    line-height: 0.8;
+    transition: all .2s;
+  }
+  /* checked mark aspect changes */
+  [type="checkbox"]:not(:checked) + label:after {
+    opacity: 0;
+    transform: scale(0);
+  }
+  [type="checkbox"]:checked + label:after {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  [type="checkbox"]:not(:checked) + label:before {
+
+  }
+  [type="checkbox"]:checked + label:before {
+    border: 1px solid #30a213;
+  }
+
+  /* disabled checkbox */
+  [type="checkbox"]:disabled:not(:checked) + label:before,
+  [type="checkbox"]:disabled:checked + label:before {
+    box-shadow: none;
+    border-color: #bbb;
+    background-color: #ddd;
+  }
+  [type="checkbox"]:disabled:checked + label:after {
+    color: #999;
+  }
+  [type="checkbox"]:disabled + label {
+    color: #aaa;
+  }
+
+
+  /* hover style just for information */
+  label:hover:before {
+    border: 1px solid #30a213!important;
+  }
