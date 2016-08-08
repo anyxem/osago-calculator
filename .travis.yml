@@ -2,6 +2,6 @@ language: node_js
 node_js:
   - "6"
 script: gulp deploy
-after_success: |
-  git config user.name='Sergey'
-  git config user.email='anyxem@gmail.com'
+before_script: |
+  git config --global user.name='Sergey'
+  git config --global user.email='anyxem@gmail.com'
