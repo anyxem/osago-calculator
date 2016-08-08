@@ -3,5 +3,5 @@ node_js:
   - "6"
 script: gulp deploy
 before_script: |
-  git config --global user.name='Sergey'
-  git config --global user.email='anyxem@gmail.com'
+  git config --global user.name "Sergey Chystiakov"
+  git config --global user.email "anyxem@gmail.com"
