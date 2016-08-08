@@ -20,7 +20,7 @@ import { AGE } from './const/age.js';
 const NEW_DRIVER = {
   age: 18,
   experience: 1,
-  bms: 'm',
+  bms: 1,
 }
 
 class App extends React.Component {
@@ -29,33 +29,34 @@ class App extends React.Component {
     super();
     this.state = {
       view: 'calc',
-      base: window.base || 1000,
+      customBase: window.customBase || null,
       ownerIsJur: 0,
+      base: 0,
       region: 1,
       city: 0,
       ts: 1,
       power: 1,
       range: 3,
-      withTralier: false,
+      withTrailer: false,
       multiDriver: false,
-      multiDriverBMS: 'm',
+      multiDriverBMS: 1,
       driverList: [
-        {
-          age: 18,
-          experience: 1,
-          bms: 'm',
-        },
+        NEW_DRIVER,
       ],
     };
 
-console.log(POWER);
     this.addDriver = this.addDriver.bind(this);
     this.toggleTrailer = this.toggleTrailer.bind(this);
     this.toggleDriver = this.toggleDriver.bind(this);
+    this.handleSetTS = this.handleSetTS.bind(this);
+  }
+
+  componentDidMount() {
+    this.handleSetTS(this.state.ts);
   }
 
   toggleTrailer() {
-    this.setState({ withTralier : !this.state.withTralier });
+    this.setState({ withTrailer : !this.state.withTrailer });
   }
 
   toggleDriver() {
@@ -66,7 +67,127 @@ console.log(POWER);
     e.preventDefault();
     let drivers = this.state.driverList;
     drivers.push(NEW_DRIVER);
-    this.setState( {driverList: drivers} );
+    this.setState({ driverList: drivers });
+  }
+
+  editDriver(index, param, id) {
+    console.log('-');
+    console.log(index, param, id);
+    let driverList = this.state.driverList;
+    let driver = driverList[index];
+    console.log(driverList);
+
+    var updatedDriver;
+
+    if( param === 'age' ){
+      updatedDriver = {
+        age: id,
+        experience: driver.experience,
+        bms: driver.bms
+      }
+    } else if( param === 'experience' ){
+      updatedDriver = {
+        age: driver.age,
+        experience: id,
+        bms: driver.bms
+      }
+    } else if( param === 'bms' ){
+      updatedDriver = {
+        age: driver.age,
+        experience: driver.experience,
+        bms: id
+      }
+    }
+
+    driverList[index] = updatedDriver;
+
+console.log(driverList);
+    this.setState({ driverList: driverList });
+  }
+
+  removeDriver(index,e) {
+    e.preventDefault();
+    let drivers = this.state.driverList;
+    drivers.splice(index, 1);
+    this.setState({ driverList: drivers });
+  }
+
+  handleSetTS(id) {
+    this.setState({ ts: ~~id, base: [TS[id].baseMin, TS[id].baseMax] });
+  }
+
+  calcKBS() {
+
+    let KBS = 0;
+    if(this.state.multiDriver === true){
+      KBS = 1;
+      return KBS;
+    }
+
+    for( let i = 0 ; i < this.state.driverList.length ; i++ ){
+
+      let nextKBS = 0;
+      let driver = this.state.driverList[i];
+      if (driver.age <= 22 && driver.experience <=3) {
+        nextKBS = 1.8;
+      } else if (driver.age > 22 && driver.experience <= 3) {
+        nextKBS = 1.7;
+      } else if (driver.age <= 22 && driver.experience > 3) {
+        nextKBS = 1.6;
+      } else if (driver.age > 22 && driver.experience > 3) {
+        nextKBS = 1;
+      }
+      if (nextKBS > KBS) {
+        KBS = nextKBS;
+      }
+    }
+    return KBS;
+  }
+
+  calcKBM() {
+    let KBS = 0;
+    if (this.state.multiDriver === true) {
+      return BMS[this.state.multiDriverBMS].k;
+    }
+
+    for (let i = 0; i < this.state.driverList.length; i++) {
+      if (BMS[this.state.driverList[i].bms].k > KBS) {
+        KBS = BMS[this.state.driverList[i].bms].k;
+      }
+    }
+
+    return KBS;
+  }
+
+  calcTrailer() {
+    let KPr = 1;
+
+    if (
+      this.state.ts === 2 ||
+      this.state.td === 1
+    ) {
+      KPr = 1.16;
+    }
+
+    if (
+      this.state.ts === 5
+    ) {
+      KPr = 1.4;
+    }
+
+    if (
+      this.state.ts === 6
+    ) {
+      KPr = 1.25;
+    }
+
+    if (
+      this.state.ts === 11
+    ) {
+      KPr = 1.24;
+    }
+
+    return KPr;
   }
 
   render() {
@@ -75,13 +196,22 @@ console.log(POWER);
     for( let row in CITIES ){
       regions[row] = {label: CITIES[row][0][3] };
     }
-    console.log(CITIES[this.state.region]);
 
     let citiesOfRegion = {};
     for( let i = 0; i < CITIES[this.state.region].length ; i++ ){
       citiesOfRegion[i] = { label: CITIES[this.state.region][i][0] };
     }
 
+    let filteredTS = {}
+    for( let row in TS ){
+      if( TS[row].hasOwnProperty('isJur') ){
+        if( TS[row].isJur == this.state.ownerIsJur ){
+          filteredTS[row] = TS[row];
+        }
+      }else{
+        filteredTS[row] = TS[row];
+      }
+    }
 
     let multiplies = []
     multiplies = [
@@ -93,12 +223,17 @@ console.log(POWER);
       {
         key: `КБМ
         (бонус-малус)`,
-        value: BMS[this.state.multiDriverBMS].k,
+        value: this.calcKBM(),
+      },
+      {
+        key: `КО
+        (мульти-драйв)`,
+        value: ( this.state.multiDriver ? 1.8 : 1 ),
       },
       {
         key: `КВС
         (возраст-стаж)`,
-        value: 1,
+        value: this.calcKBS(),
       },
       {
         key: `КС
@@ -117,6 +252,24 @@ console.log(POWER);
       }
     ];
 
+console.log(this.state);
+
+    if (this.state.withTrailer === true) {
+      console.log('with');
+      multiplies.push({
+        key: `КПр
+        (прицеп)`,
+        value: this.calcTrailer(),
+      });
+    }
+
+    console.log(multiplies);
+
+    let totalMultiplier = 1;
+    for( let multiply in multiplies ){
+      totalMultiplier = totalMultiplier * multiplies[multiply].value;
+    }
+
     return (
       <div className="calculator-osago">
         <h1>Калькулятор ОСАГО</h1>
@@ -126,7 +279,12 @@ console.log(POWER);
             options={OWNER}
             value={this.state.ownerIsJur}
             label={OWNER[this.state.ownerIsJur].label}
-            onChange={(id) => (this.setState({ ownerIsJur: id }))}
+            onChange={(id) => {
+              if (TS[this.state.ts].hasOwnProperty('isJur')) {
+                this.setState({ ts: 1 });
+              }
+              this.setState({ ownerIsJur: id });
+            }}
           />
         </div>
         <div className="form-group">
@@ -152,10 +310,10 @@ console.log(POWER);
         <div className="form-group">
           <div className="title">Транспортное средство</div>
           <DropDown
-            options={TS}
+            options={filteredTS}
             value={this.state.ts}
-            label={TS[this.state.ts].label}
-            onChange={(id) => (this.setState({ ts: id }))}
+            label={filteredTS[this.state.ts].label}
+            onChange={(id) => (this.handleSetTS(id))}
           />
         </div>
 
@@ -216,7 +374,7 @@ console.log(POWER);
                     options={AGE}
                     value={item.age}
                     label={AGE[item.age].label}
-                    onChange={(id) => {let driverList = this.state.driverList; driverList[index].age = id; this.setState({ driverList: driverList })}}
+                    onChange={(id) => { this.editDriver.call(this,index,'age',id) }}
                   />
                 </div>
                 <div className="form-group -half">
@@ -225,30 +383,36 @@ console.log(POWER);
                     options={EXPERIENCE}
                     value={item.experience}
                     label={EXPERIENCE[item.experience].label}
-                    onChange={(id) => {let driverList = this.state.driverList; driverList[index].experience = id; this.setState({ driverList: driverList })}}
+                    onChange={(id) => { this.editDriver.call(this,index,'experience',id) }}
                   />
                 </div>
-                <div className="form-group -double">
+                <div className={'form-group -double' + (this.state.driverList.length > 1 ? ' -minusone' : '')}>
                   <div className="title">Коэффициент безаварийности (<a href="#">проверить</a>) <a href="#" className="ico-q" data-tooltip="КБМ, коэфициент бонус-малус, определяется по единой базе РСА, в которой зафиксированы прошлые страховые случаи (ДТП) по водителю. Для страхующихся впервые равен единице (класс 3)"></a></div>
                   <DropDown
                     options={BMS}
                     value={item.bms}
                     label={BMS[item.bms].label}
-                    onChange={(id) => {let driverList = this.state.driverList; driverList[index].bms = id; this.setState({ driverList: driverList })}}
+                    onChange={(id) => { this.editDriver.call(this,index,'bms',id) }}
                   />
                 </div>
+                {this.state.driverList.length > 1 ?
+                  <div className="form-group -one">
+                    <a href="#" className="remove" onClick={this.removeDriver.bind(this,index)}>Удалить</a>
+                  </div>
+                : <div/> }
+
               </div>
             );
           }, this)
         }
 
         {
-          !this.state.multiDriver &&
+          !this.state.multiDriver && this.state.driverList.length < 5 ?
           (
             <div className="form-group -full">
               <a href="#" className="add" onClick={this.addDriver}>Добавить еще одного водителя</a>
             </div>
-          )
+          ) : <div/>
         }
 
 
@@ -256,9 +420,25 @@ console.log(POWER);
 
         <h1>Стоимость полиса ОСАГО</h1>
 
-        <div className="price">30 000 ₽</div>
+        <div className="price">
+        {
+          typeof this.state.base === 'number'
+          ?
+          (this.state.base*totalMultiplier).toFixed(2)
+          :
+          ((this.state.base[0]*totalMultiplier).toFixed(2)+' - '+(this.state.base[1]*totalMultiplier).toFixed(2))
+        }
+        ₽</div>
 
-        <div className="base-price">Базовый тариф: <span className="number">{typeof this.state.base === 'number' ? this.state.base : (this.state.base[0]+' - '+this.state.base[1])} ₽</span></div>
+        <div className="base-price">Базовый тариф:
+          <span className="number">
+            {
+              typeof this.state.base === 'number'
+              ?
+              this.state.base : (this.state.base[0]+' - '+this.state.base[1])
+            } ₽
+          </span>
+        </div>
 
         <div className="table">
           {

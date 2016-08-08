@@ -20,7 +20,6 @@ export default class Dropdown extends React.Component {
   }
 
   handleClick(key) {
-    console.log(key);
     this.setState({ open: false });
     this.props.onChange( key );
   }
