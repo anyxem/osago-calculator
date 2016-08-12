@@ -296,7 +296,7 @@ console.log(this.state);
                 if( this.state.ts === 2 ){ this.setState({ ts: 3 }); }
                 else if( this.state.ts === 3 ){ this.setState({ ts: 2 }); }
               }
-              this.setState({ ownerIsJur: ~~id ,  });
+              this.setState({ ownerIsJur: ~~id , multiDriver: ~~id });
             }}
           />
         </div>
@@ -360,7 +360,7 @@ console.log(this.state);
         <h2>Список водителей</h2>
 
         <div className="form-group -full">
-          <input type="checkbox" onChange={this.toggleDriver} id="multiDriver" />
+          <input type="checkbox" onChange={this.toggleDriver} checked={this.state.ownerIsJur===1?'true':''} disabled={this.state.ownerIsJur===1?'disabled':''} id="multiDriver" />
           <label htmlFor="multiDriver">Неограниченное число водителей (мультидрайв)</label>
         </div>
         {
