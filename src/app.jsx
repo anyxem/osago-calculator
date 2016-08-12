@@ -18,10 +18,10 @@ import { EXPERIENCE } from './const/experience.js';
 import { AGE } from './const/age.js';
 
 const NEW_DRIVER = {
-  age: 18,
-  experience: 1,
+  age: 23,
+  experience: 3,
   bms: 1,
-}
+};
 
 class App extends React.Component {
 
@@ -34,8 +34,8 @@ class App extends React.Component {
       base: 0,
       region: 1,
       city: 0,
-      ts: 1,
-      power: 1,
+      ts: 3,
+      power: 5,
       range: 3,
       withTrailer: false,
       multiDriver: false,
@@ -113,28 +113,31 @@ console.log(driverList);
   }
 
   handleSetTS(id) {
-    this.setState({ ts: ~~id, base: [TS[id].baseMin, TS[id].baseMax] });
+
+    if( this.state.customBase === null ){
+      this.setState({ ts: ~~id, base: [~~TS[id].baseMin, ~~TS[id].baseMax] });
+    }else{
+      this.setState({ ts: ~~id, base: ~~this.state.customBase[id].base });
+    }
   }
 
   calcKBS() {
-
     let KBS = 0;
-    if(this.state.multiDriver === true){
+    if (this.state.multiDriver === true) {
       KBS = 1;
       return KBS;
     }
 
-    for( let i = 0 ; i < this.state.driverList.length ; i++ ){
-
+    for (let i = 0; i < this.state.driverList.length; i++) {
       let nextKBS = 0;
       let driver = this.state.driverList[i];
-      if (driver.age <= 22 && driver.experience <=3) {
+      if (driver.age <= 22 && driver.experience < 3) {
         nextKBS = 1.8;
-      } else if (driver.age > 22 && driver.experience <= 3) {
+      } else if (driver.age > 22 && driver.experience < 3) {
         nextKBS = 1.7;
-      } else if (driver.age <= 22 && driver.experience > 3) {
+      } else if (driver.age <= 22 && driver.experience >= 3) {
         nextKBS = 1.6;
-      } else if (driver.age > 22 && driver.experience > 3) {
+      } else if (driver.age > 22 && driver.experience >= 3) {
         nextKBS = 1;
       }
       if (nextKBS > KBS) {
@@ -164,7 +167,9 @@ console.log(driverList);
 
     if (
       this.state.ts === 2 ||
-      this.state.td === 1
+      this.state.ts === 3 ||
+      ( this.state.ts === 4 && this.state.ownerIsJur === 1 ) ||
+      ( this.state.ts === 1 && this.state.ownerIsJur === 1 )
     ) {
       KPr = 1.16;
     }
@@ -218,7 +223,7 @@ console.log(driverList);
       {
         key: `КТ
         (терр.)`,
-        value: CITIES[this.state.region][this.state.city][(this.state.ts == 10 ? 2 : 1)]
+        value: CITIES[this.state.region][this.state.city][(this.state.ts == 11 ? 2 : 1)]
       },
       {
         key: `КБМ
@@ -245,21 +250,24 @@ console.log(driverList);
         (срок страхования)`,
         value: 1
       },
-      {
-        key: `КМ
-        (мощность)`,
-        value: POWER[this.state.power].k
-      }
+
     ];
 
 console.log(this.state);
 
     if (this.state.withTrailer === true) {
-      console.log('with');
       multiplies.push({
         key: `КПр
         (прицеп)`,
         value: this.calcTrailer(),
+      });
+    }
+
+    if (this.state.ts === 2 || this.state.ts === 3 || this.state.ts === 4 ) {
+      multiplies.push({
+        key: `КМ
+        (мощность)`,
+        value: POWER[this.state.power].k
       });
     }
 
@@ -268,6 +276,10 @@ console.log(this.state);
     let totalMultiplier = 1;
     for( let multiply in multiplies ){
       totalMultiplier = totalMultiplier * multiplies[multiply].value;
+    }
+
+    if(totalMultiplier > 3*CITIES[this.state.region][this.state.city][(this.state.ts == 11 ? 2 : 1)]) {
+      totalMultiplier = 3*CITIES[this.state.region][this.state.city][(this.state.ts == 11 ? 2 : 1)];
     }
 
     return (
@@ -281,9 +293,10 @@ console.log(this.state);
             label={OWNER[this.state.ownerIsJur].label}
             onChange={(id) => {
               if (TS[this.state.ts].hasOwnProperty('isJur')) {
-                this.setState({ ts: 1 });
+                if( this.state.ts === 2 ){ this.setState({ ts: 3 }); }
+                else if( this.state.ts === 3 ){ this.setState({ ts: 2 }); }
               }
-              this.setState({ ownerIsJur: id });
+              this.setState({ ownerIsJur: ~~id ,  });
             }}
           />
         </div>
@@ -320,6 +333,7 @@ console.log(this.state);
         <div className="form-group">
           <div className="title">Мощность двигателя</div>
           <DropDown
+            disabled={!( this.state.ts === 2 || this.state.ts === 3 || this.state.ts === 4 )}
             options={POWER}
             value={this.state.power}
             label={POWER[this.state.power].label}

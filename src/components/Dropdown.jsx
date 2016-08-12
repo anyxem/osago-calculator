@@ -16,7 +16,9 @@ export default class Dropdown extends React.Component {
   }
 
   toggleDropdown() {
-    this.setState({ open: !this.state.open });
+    if(!this.props.disabled){
+      this.setState({ open: !this.state.open });
+    }
   }
 
   handleClick(key) {
@@ -26,7 +28,7 @@ export default class Dropdown extends React.Component {
 
   render() {
     return (
-      <div className={`dropdown ${(this.state.open ? ' open' : '')}`}>
+      <div className={`dropdown ${(this.state.open ? ' open' : '')} ${(this.props.disabled ? ' disabled' : '')}`}>
         <div className="dropdown-label" onClick={this.toggleDropdown}>{this.props.label}</div>
         <div className="dropdown-options"><ul>
           { Object.keys(this.props.options).map(function(item){
@@ -44,9 +46,11 @@ export default class Dropdown extends React.Component {
 }
 
 Dropdown.propTypes = {
-  options: React.PropTypes.object.isRequired
+  options: React.PropTypes.object.isRequired,
+  disabled: React.PropTypes.bool
 };
 
 Dropdown.defaultProps = {
-  options: { 0: {label:' - выберите значение - '} }
+  options: { 0: {label:' - выберите значение - '} },
+  disabled: false,
 };

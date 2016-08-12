@@ -1,16 +1,18 @@
+phone = "(max-width: 480px)";
+
 *
   box-sizing border-box
-
-
-body
-  font-family: 'Roboto', sans-serif;
-  font-size 14px
-
-
 
 .calculator-osago
   width 900px
   margin 10px auto 60px auto
+  font-family: 'Roboto', sans-serif;
+  font-size 14px
+
+  @media phone
+    width auto
+    margin-right 5px
+    margin-left 5px
 
   a
     color #30a213
@@ -63,6 +65,8 @@ body
     transition: all .3s;
     &:hover
       background-color #298a11
+    @media phone
+      width 100%
 
   h1
     font-weight 300
@@ -75,6 +79,10 @@ body
 
   .row-group
     clear both
+    &:after
+      display table
+      content ''
+      clear both
 
   .form-group
     margin-bottom 27px
@@ -85,16 +93,28 @@ body
       width 40px
       margin-right 0
       padding-top 45px
+      @media phone
+        width 0
     &.-half
       width 120px
+      @media phone
+        width 40%
     &.-double
       width 570px
       &.-minusone
         width 530px
-
+        @media phone
+          width 90%
+      @media phone
+        width 100%
     &.-full
       width auto
       float none
+      @media phone
+        width 100%
+
+    @media phone
+      width 100%
 
     .title
       color #8996ab
@@ -105,6 +125,9 @@ body
     font-weight: 300;
     line-height: 70px;
     color #30a213
+    @media phone
+      font-size 30px
+      line-height 1.4
 
   .base-price
     margin-top: 8px;
@@ -119,13 +142,26 @@ body
     border-bottom: 1px #ccc solid;
     display table
     width 100%
+    @media block
+      width 100%
+
     .cell
       display table-cell
+      @media phone
+        display block
       .key
         padding 26px 10px 10px 0px
         font-size 14px
         white-space: pre-line;
         color #8996ab
+        @media phone
+          width 50%
+          display inline-block
+          text-align right
+          padding-right 10px
       .value
         padding 4px 10px 25px 0px
         font-size 24px
+        @media phone
+          width 50%
+          display inline-block
