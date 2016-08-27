@@ -9,6 +9,6 @@ export const TS = {
   8: { label: 'Автобусы свыше 16 мест', k: 1, baseMin: 3509, baseMax: 4211 },
   9: { label: 'Троллейбусы', k: 1, baseMin: 2808, baseMax: 3370 },
   10: { label: 'Трамваи', k: 1, baseMin: 1751, baseMax: 2101 },
-  11: { label: 'Тракторы и иные машины', k: 1, baseMin: 1124, baseMax: 1579 },
+  11: { label: 'Трактора и самоходные машины', k: 1, baseMin: 1124, baseMax: 1579 },
   12: { label: 'Автобусы - такси', k: 1, baseMin: 5138, baseMax: 6166 },
 };

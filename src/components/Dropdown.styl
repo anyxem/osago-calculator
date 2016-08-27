@@ -9,6 +9,9 @@
       background-position top 50% right 19px
       white-space nowrap
       overflow hidden
+      border-radius 2px
+      transition all .3s
+      white-space nowrap
     .dropdown-options
       display none
       position: absolute;
@@ -39,4 +42,8 @@
       .dropdown-options
         display block
     &.disabled
-      opacity .4    
+      opacity .4
+    &:hover
+      cursor pointer
+      .dropdown-label
+        border-color #30a213

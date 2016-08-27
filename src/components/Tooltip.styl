@@ -1,3 +1,5 @@
+phone = "(max-width: 540px)";
+
 .calculator-osago
   .ico-q
     position: relative;
@@ -10,9 +12,13 @@
     background-image url(/assets/qmark-gray.png)
     vertical-align middle
     margin-left 16px
+    cursor pointer
+    @media phone
+      margin-left 0
+      vertical-align bottom
     &:focus
       background-image url(/assets/qmark-green.png)
-  .ico-q {
+  .ico-q
     position: relative;
     color: inherit;
     text-decoration: none;
@@ -20,10 +26,10 @@
     width 20px
     height 20px
     background-image url(/assets/qmark-gray.png)
-  }
-  .ico-q:after{
+
+  .ico-q:after
     box-sizing: border-box;
-    color #ccc!important
+    color #8996ab!important
     display: none;
     content: attr(data-tooltip);
     position: absolute;
@@ -38,8 +44,12 @@
     transition: all .2s;
     font-size 11px
     line-height 18px
-  }
-  .ico-q:before{
+    white-space normal
+    @media phone
+      margin-left -260px
+      left 0
+
+  .ico-q:before
     display none
     position: absolute;
     width: 0;
@@ -54,13 +64,13 @@
     margin-bottom: 6px;
     margin-left: -5px;
     z-index: 1;
-  }
-  .ico-q:hover:after{
-    display: block;
-    opacity: 1;
+    @media phone
+      display none!important
+
+  .ico-q:hover:after , .ico-q:focus:after
+    display block
+    opacity 1
     margin-bottom 16px
 
-  }
-  .ico-q:hover:before{
+  .ico-q:hover:before , .ico-q:focus:before
     display block
-  }

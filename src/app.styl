@@ -1,22 +1,25 @@
-phone = "(max-width: 480px)";
+phone = "(max-width: 540px)";
+tablet = "(max-width: 768px)";
+middle = "(min-width: 991px) and (max-width: 1199px)";
+basewidth = 900px
 
 *
   box-sizing border-box
 
 .calculator-osago
-  width 900px
-  margin 10px auto 60px auto
-  font-family: 'Roboto', sans-serif;
+  width auto
+  max-width basewidth
+  margin 10px percentage(-30px / basewidth / 2) 60px percentage(-30px / basewidth / 2)
+  font-family: 'RobotoRegular', sans-serif;
   font-size 14px
 
   @media phone
-    width auto
-    margin-right 5px
-    margin-left 5px
+    width 100%
 
   a
     color #30a213
     transition: all .3s;
+    box-shadow: none!important;
     &:hover
       color #ff9907
     &.remove
@@ -45,6 +48,7 @@ phone = "(max-width: 480px)";
       display inline-block
       position relative
       text-decoration none
+      margin-top 17px
       &:before
         content '\02039'
         color inherit
@@ -63,19 +67,27 @@ phone = "(max-width: 480px)";
     padding: 20px 24px;
     border-radius: 2px
     transition: all .3s;
+    margin-left percentage(30px / basewidth / 2)
     &:hover
       background-color #298a11
     @media phone
       width 100%
 
-  h1
+  h2.title
     font-weight 300
     font-size 36px
     clear both
+    margin-left percentage(30px / basewidth / 2)
+    margin-top 0.83em
+    margin-bottom 0.83em
 
-  h2
-    font-weight 30
+  h3.title
+    font-weight 300
+    font-size 32px
     clear both
+    margin-left percentage(30px / basewidth / 2)
+    margin-top 0.83em
+    margin-bottom 0.83em
 
   .row-group
     clear both
@@ -86,23 +98,33 @@ phone = "(max-width: 480px)";
 
   .form-group
     margin-bottom 27px
-    width 270px
-    margin-right 30px
+    width percentage( 270px / basewidth )
+    margin-right percentage(30px / basewidth / 2)
+    margin-left percentage(30px / basewidth / 2)
     float left
+
+    @media middle
+      width percentage(420px / basewidth)
+
+    @media tablet
+      width percentage(420px / basewidth)
+
+
     &.-one
-      width 40px
+      width percentage(40px / basewidth)
       margin-right 0
+      margin-left 0
       padding-top 45px
       @media phone
         width 0
     &.-half
-      width 120px
+      width percentage(120px / basewidth)
       @media phone
         width 40%
     &.-double
-      width 570px
+      width percentage(570px / basewidth)
       &.-minusone
-        width 530px
+        width percentage(530px / basewidth)
         @media phone
           width 90%
       @media phone
@@ -119,12 +141,17 @@ phone = "(max-width: 480px)";
     .title
       color #8996ab
       margin-bottom 14px
+      white-space nowrap
 
   .price
     font-size: 71px;
     font-weight: 300;
     line-height: 70px;
     color #30a213
+    margin-left percentage(30px / basewidth / 2)
+    margin-right percentage(30px / basewidth / 2)
+    font-family "Roboto", sans-serif
+    font-weight 100
     @media phone
       font-size 30px
       line-height 1.4
@@ -132,6 +159,8 @@ phone = "(max-width: 480px)";
   .base-price
     margin-top: 8px;
     color #8996ab
+    margin-left percentage(30px / basewidth / 2)
+    margin-right percentage(30px / basewidth / 2)
     .number
       color #000000
 
@@ -141,9 +170,11 @@ phone = "(max-width: 480px)";
     border-top: 1px #ccc solid;
     border-bottom: 1px #ccc solid;
     display table
-    width 100%
-    @media block
-      width 100%
+    width auto
+    margin-left percentage(30px / basewidth / 2)
+    margin-right percentage(30px / basewidth / 2)
+    @media phone
+      display none
 
     .cell
       display table-cell

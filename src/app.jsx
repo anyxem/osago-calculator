@@ -1,5 +1,6 @@
 import React from 'react';
 import { render } from 'react-dom';
+import $ from 'jquery';
 
 import DropDown, { Item } from './components/Dropdown'
 
@@ -7,6 +8,7 @@ import './app.styl';
 import './components/Checkboxes.styl';
 import './components/Radio.styl';
 import './components/Tooltip.styl';
+import './components/Modal.styl';
 
 import { OWNER } from './const/owner.js';
 import { POWER } from './const/power.js';
@@ -36,23 +38,148 @@ class App extends React.Component {
       city: 0,
       ts: 3,
       power: 5,
-      range: 3,
+      range: 10,
       withTrailer: false,
       multiDriver: false,
       multiDriverBMS: 1,
+      sender: window.sender || '/wp-content/plugins/osago-calc/public/contact_me.php',
+      marketingHtml: window.marketingHtml || '',
+      calcId: window.calcId || null,
+      calcTitle: window.calcTitle || null,
+      checkBmsLink: window.checkBmsLink || 'http://avto-yslyga.ru/proverit-kbm-osago/',
       driverList: [
         NEW_DRIVER,
       ],
+      name: null,
+      nameErr: false,
+      phone: null,
+      phoneErr: false,
     };
 
     this.addDriver = this.addDriver.bind(this);
     this.toggleTrailer = this.toggleTrailer.bind(this);
     this.toggleDriver = this.toggleDriver.bind(this);
     this.handleSetTS = this.handleSetTS.bind(this);
+    this.sendOrder = this.sendOrder.bind(this);
   }
 
   componentDidMount() {
     this.handleSetTS(this.state.ts);
+  }
+
+  sendOrder() {
+    let payload = [];
+
+    let err = {};
+    if(this.state.name === null || this.state.name.length < 1){
+      err.nameErr = true;
+    }
+
+    if(this.state.phone === null || this.state.phone.length < 1){
+      err.phoneErr = true;
+    }
+
+    if(err.nameErr || err.phoneErr){
+      this.setState(err);
+      return;
+    }
+
+    let multiplies = []
+    multiplies = [
+      {
+        key: `КТ
+        (терр.)`,
+        value: CITIES[this.state.region][this.state.city][(this.state.ts == 11 ? 2 : 1)],
+        label: CITIES[this.state.region][this.state.city][0]
+      },
+      {
+        key: `КБМ
+        (бонус-малус)`,
+        value: this.calcKBM(),
+        label: 'Коэфф '+this.calcKBM(),
+      },
+      {
+        key: `КО
+        (мульти-драйв)`,
+        value: ( this.state.multiDriver ? 1.8 : 1 ),
+        label: ( this.state.multiDriver ? 'есть' : 'нет' ),
+      },
+      {
+        key: `КВС
+        (возраст-стаж)`,
+        value: this.calcKBS(),
+        label: 'Коэфф '+this.calcKBS(),
+      },
+      {
+        key: `КС
+        (период использования)`,
+        value:RANGE[this.state.range].k,
+        label:RANGE[this.state.range].label
+      },
+      {
+        key: `КП
+        (срок страхования)`,
+        value: 1,
+        label: ''
+      },
+
+    ];
+
+    if (this.state.withTrailer === true) {
+      multiplies.push({
+        key: `КПр
+        (прицеп)`,
+        value: this.calcTrailer(),
+        label: 'используется'
+      });
+    }
+
+    if (this.state.ts === 2 || this.state.ts === 3 || this.state.ts === 4 ) {
+      multiplies.push({
+        key: `КМ
+        (мощность)`,
+        value: POWER[this.state.power].k,
+        label: POWER[this.state.power].label,
+      });
+    }
+
+
+    let totalMultiplier = 1;
+    for( let multiply in multiplies ){
+      totalMultiplier = totalMultiplier * multiplies[multiply].value;
+    }
+
+    if(totalMultiplier > 3*CITIES[this.state.region][this.state.city][(this.state.ts == 11 ? 2 : 1)]) {
+      totalMultiplier = 3*CITIES[this.state.region][this.state.city][(this.state.ts == 11 ? 2 : 1)];
+    }
+
+    payload = multiplies.map(function(item){
+      return item.key+' '+item.label+' '+item.value;
+    }).join('\n');
+
+    $.ajax({
+				url: this.state.sender,
+				type: "post",
+				data:({
+					name:this.state.name,
+					contact:this.state.phone,
+					calcId:this.state.calcId,
+					result:payload
+				}),
+
+				beforeSend: function( ) {
+					$(".window .response").text('Отправка...');
+				},
+				success: function( data ) {
+
+					$(".window .response").text( data );
+				},
+				error: function (xhr, ajaxOptions, thrownError) {
+          console.log(xhr);
+					$(".window .response").html( xhr.responseText );
+				}
+			});
+
   }
 
   toggleTrailer() {
@@ -71,14 +198,9 @@ class App extends React.Component {
   }
 
   editDriver(index, param, id) {
-    console.log('-');
-    console.log(index, param, id);
     let driverList = this.state.driverList;
     let driver = driverList[index];
-    console.log(driverList);
-
     var updatedDriver;
-
     if( param === 'age' ){
       updatedDriver = {
         age: id,
@@ -101,7 +223,6 @@ class App extends React.Component {
 
     driverList[index] = updatedDriver;
 
-console.log(driverList);
     this.setState({ driverList: driverList });
   }
 
@@ -117,7 +238,20 @@ console.log(driverList);
     if( this.state.customBase === null ){
       this.setState({ ts: ~~id, base: [~~TS[id].baseMin, ~~TS[id].baseMax] });
     }else{
-      this.setState({ ts: ~~id, base: ~~this.state.customBase[id].base });
+
+      if( this.state.customBase[id].base ){
+        this.setState({ ts: ~~id, base: ~~this.state.customBase[id].base });
+      }else if(
+        this.state.customBase[id].baseMin &&
+        this.state.customBase[id].baseMax &&
+        ~~this.state.customBase[id].baseMin !== 0 &&
+        ~~this.state.customBase[id].baseMax !== 0
+      ){
+        this.setState({ ts: ~~id, base: [~~this.state.customBase[id].baseMin, ~~this.state.customBase[id].baseMax] });
+      } else{
+        this.setState({ ts: ~~id, base: [~~TS[id].baseMin, ~~TS[id].baseMax] });
+      }
+
     }
   }
 
@@ -223,43 +357,48 @@ console.log(driverList);
       {
         key: `КТ
         (терр.)`,
-        value: CITIES[this.state.region][this.state.city][(this.state.ts == 11 ? 2 : 1)]
+        value: CITIES[this.state.region][this.state.city][(this.state.ts == 11 ? 2 : 1)],
+        label: CITIES[this.state.region][this.state.city][0]
       },
       {
         key: `КБМ
         (бонус-малус)`,
         value: this.calcKBM(),
+        label: 'Коэфф '+this.calcKBM(),
       },
       {
         key: `КО
         (мульти-драйв)`,
         value: ( this.state.multiDriver ? 1.8 : 1 ),
+        label: ( this.state.multiDriver ? 'есть' : 'нет' ),
       },
       {
         key: `КВС
         (возраст-стаж)`,
         value: this.calcKBS(),
+        label: 'Коэфф '+this.calcKBS(),
       },
       {
         key: `КС
         (период использования)`,
-        value:RANGE[this.state.range].k
+        value:RANGE[this.state.range].k,
+        label:RANGE[this.state.range].label
       },
       {
         key: `КП
         (срок страхования)`,
-        value: 1
+        value: 1,
+        label: ''
       },
 
     ];
-
-console.log(this.state);
 
     if (this.state.withTrailer === true) {
       multiplies.push({
         key: `КПр
         (прицеп)`,
         value: this.calcTrailer(),
+        label: 'используется'
       });
     }
 
@@ -267,11 +406,11 @@ console.log(this.state);
       multiplies.push({
         key: `КМ
         (мощность)`,
-        value: POWER[this.state.power].k
+        value: POWER[this.state.power].k,
+        label: POWER[this.state.power].label,
       });
     }
 
-    console.log(multiplies);
 
     let totalMultiplier = 1;
     for( let multiply in multiplies ){
@@ -282,9 +421,14 @@ console.log(this.state);
       totalMultiplier = 3*CITIES[this.state.region][this.state.city][(this.state.ts == 11 ? 2 : 1)];
     }
 
-    return (
-      <div className="calculator-osago">
-        <h1>Калькулятор ОСАГО</h1>
+
+
+    let view = null;
+
+    if(this.state.view === 'calc'){
+      view = (
+        <div>
+        { this.state.calcTitle === null ? <h2 className="title">Калькулятор ОСАГО</h2> : <h2 className="title">{this.state.calcTitle}</h2> }
         <div className="form-group">
           <div className="title">Собственник транспортного средства</div>
           <DropDown
@@ -357,10 +501,10 @@ console.log(this.state);
           <label htmlFor="withTrailer">Будет использоваться с прицепом</label>
         </div>
 
-        <h2>Список водителей</h2>
+        <h3 className="title">Список водителей</h3>
 
         <div className="form-group -full">
-          <input type="checkbox" onChange={this.toggleDriver} checked={this.state.ownerIsJur===1?'true':''} disabled={this.state.ownerIsJur===1?'disabled':''} id="multiDriver" />
+          <input type="checkbox" onChange={this.toggleDriver}  disabled={this.state.ownerIsJur===1?'disabled':''} id="multiDriver" />
           <label htmlFor="multiDriver">Неограниченное число водителей (мультидрайв)</label>
         </div>
         {
@@ -368,7 +512,7 @@ console.log(this.state);
           (
             <div className="row-group">
               <div className="form-group -full">
-                <div className="title">Коэффициент безаварийности (<a href="#">проверить</a>) <a href="#" className="ico-q" data-tooltip="КБМ, коэфициент бонус-малус, определяется по единой базе РСА, в которой зафиксированы прошлые страховые случаи (ДТП) по водителю. Для страхующихся впервые равен единице (класс 3)"></a></div>
+                <div className="title">Коэффициент безаварийности (<a href={this.state.checkBmsLink} target="_blank">проверить</a>) <span className="ico-q" data-tooltip="КБМ, коэфициент бонус-малус, определяется по единой базе РСА, в которой зафиксированы прошлые страховые случаи (ДТП) по водителю. Для страхующихся впервые равен единице (класс 3)"></span></div>
                 <DropDown
                   options={BMS}
                   value={this.state.multiDriverBMS}
@@ -401,7 +545,7 @@ console.log(this.state);
                   />
                 </div>
                 <div className={'form-group -double' + (this.state.driverList.length > 1 ? ' -minusone' : '')}>
-                  <div className="title">Коэффициент безаварийности (<a href="#">проверить</a>) <a href="#" className="ico-q" data-tooltip="КБМ, коэфициент бонус-малус, определяется по единой базе РСА, в которой зафиксированы прошлые страховые случаи (ДТП) по водителю. Для страхующихся впервые равен единице (класс 3)"></a></div>
+                  <div className="title">Коэффициент безаварийности (<a href={this.state.checkBmsLink} target="_blank">проверить</a>) <span className="ico-q" data-tooltip="КБМ, коэфициент бонус-малус, определяется по единой базе РСА, в которой зафиксированы прошлые страховые случаи (ДТП) по водителю. Для страхующихся впервые равен единице (класс 3)"></span></div>
                   <DropDown
                     options={BMS}
                     value={item.bms}
@@ -430,9 +574,14 @@ console.log(this.state);
         }
 
 
-        <button>Рассчитать</button>
-
-        <h1>Стоимость полиса ОСАГО</h1>
+        <button onClick={(e)=>{$('html,body').animate({scrollTop: $("#root").offset().top},'slow');this.setState({ view: 'result' }) }}>Рассчитать</button>
+        </div>
+      );
+    }
+    else if (this.state.view == 'result' || this.state.view == 'order'){
+      view = (
+        <div>
+        <h2 className="title">Стоимость полиса ОСАГО</h2>
 
         <div className="price">
         {
@@ -442,15 +591,15 @@ console.log(this.state);
           :
           ((this.state.base[0]*totalMultiplier).toFixed(2)+' - '+(this.state.base[1]*totalMultiplier).toFixed(2))
         }
-        ₽</div>
+        {` `}₽</div>
 
-        <div className="base-price">Базовый тариф:
+        <div className="base-price">Базовый тариф:{` `}
           <span className="number">
             {
               typeof this.state.base === 'number'
               ?
               this.state.base : (this.state.base[0]+' - '+this.state.base[1])
-            } ₽
+            } ₽ (в зависимости от страховой компании)
           </span>
         </div>
 
@@ -473,11 +622,47 @@ console.log(this.state);
 
 
         <div className="form-group -full">
-          <a href="#" className="back">Рассчитать еще раз</a>
+          <a href="#" className="back" onClick={(e)=>{e.preventDefault();$('html,body').animate({scrollTop: $("#root").offset().top},'slow');this.setState({view:'calc'})}}>Рассчитать еще раз</a>
         </div>
 
-        <button>Заказать полис ОСАГО с бесплатной доставкой</button>
+        <button onClick={(e)=>(this.setState({view:'order'}))}>Заказать полис ОСАГО с бесплатной доставкой</button>
+        <div style={{marginTop: '16px'}} dangerouslySetInnerHTML={{__html:this.state.marketingHtml}}></div>
+        </div>
+      );
+    }
 
+    let modal = null;
+
+    if(this.state.view == 'order'){
+      modal = (
+        <div className="overlay">
+          <div className="window">
+            <a href="#" onClick={(e)=>{e.preventDefault();this.setState({view:'result'})}} className="close">Назад</a>
+            <h2 className="title">Заказать полис ОСАГО с бесплатной доставкой</h2>
+            <div className="row-group">
+              <div className="form-group -full">
+                <div className="title">Имя</div>
+                <input type="text" ref="name" className={this.state.nameErr?'error':''} value={this.state.name} onChange={(e)=>(this.setState({name:e.target.value, nameErr: false}))} placeholder="Иванов Иван Иванович" />
+              </div>
+            </div>
+            <div className="row-group">
+              <div className="form-group -full">
+                <div className="title">Телефон</div>
+                <input type="text" ref="phone" className={this.state.phoneErr?'error':''} value={this.state.phone} onChange={(e)=>(this.setState({phone:e.target.value, phoneErr: false}))}  placeholder="+7(900)000-00-00" />
+              </div>
+            </div>
+            <button onClick={this.sendOrder}>Заказать полис</button>
+            <div className="note">Ваши персональные данные не будут переданы третьим лицам</div>
+            <div className="response"></div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="calculator-osago">
+        {view}
+        {modal}
       </div>
     );
   }

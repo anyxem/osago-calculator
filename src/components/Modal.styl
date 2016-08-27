@@ -1,0 +1,108 @@
+phone = "(max-width: 540px)";
+basewidth = 900px
+
+.overlay
+  position fixed
+  top 0
+  left 0
+  right 0
+  bottom 0
+  background-color rgba(0,0,0,0.4)
+  z-index 20
+  .window
+    width: 570px;
+    background: #fff;
+    border-radius: 5px;
+    position: absolute;
+    height: auto;
+    padding: 23px 60px 60px 60px;
+    left: 50%;
+    margin-left: -285px;
+    top: 50%;
+    margin-top: -400px;
+
+    @media phone
+      width: 100%;
+      margin: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0px;
+      right: 0;
+      padding: 23px 10px 60px 10px;
+
+    .response
+      padding-top 10px
+      p
+        padding 0
+        margin 0
+
+    a.close
+      position: absolute;
+      top: 0;
+      right: -44px;
+      display: block;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 62px;
+      text-indent -999px
+      overflow hidden
+      width 24px
+      height 24px
+      background-image url(/assets/close.svg)
+      background-repeat no-repeat
+      @media phone
+        right auto
+        left 10px
+        top 10px
+        color #30a213
+        position absolute
+        font-weight: bold;
+        display: inline-block;
+        text-decoration: none;
+        margin-top: 17px;
+        font-size 14px
+        text-indent 0
+        width auto
+        height auto
+        padding-left 26px
+        &:before
+          content: '\2039';
+          color: inherit;
+          position: absolute;
+          font-size: 20px;
+          line-height: 16px;
+          left: 0;
+          top: 0;
+
+
+    .title
+      margin-left 0
+      margin-right 0
+
+    button
+      margin-left 0
+      margin-right 0
+
+    .form-group.-full
+      margin-right 0
+      margin-left 0
+
+    input
+      border 1px solid #dadde0
+      padding 17px 20px 18px 19px
+      white-space nowrap
+      overflow hidden
+      border-radius 2px
+      transition all .3s
+      white-space nowrap
+      -webkit-appearance: none;
+      -moz-appearance:    none;
+      appearance:         none;
+      outline none
+      width 100%
+      &:hover
+        cursor pointer
+        border-color #30a213
+      &.error
+        border-color #f00
