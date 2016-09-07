@@ -18,8 +18,7 @@ basewidth = 900px
     padding: 23px 60px 60px 60px;
     left: 50%;
     margin-left: -285px;
-    top: 50%;
-    margin-top: -400px;
+    top: 50px;
 
     @media phone
       width: 100%;
@@ -30,6 +29,21 @@ basewidth = 900px
       bottom: 0px;
       right: 0;
       padding: 23px 10px 60px 10px;
+
+    .note
+      padding-left 44px
+      font-size 14px
+      color #8996ab
+      background-image url(/assets/amark-gray.png)
+      background-repeat no-repeat
+      background-position 0px 5px
+      float right
+      width 275px
+      line-height 17px
+      margin-top 9px
+      min-height 35px
+      @media phone
+        width: 100%;
 
     .response
       padding-top 10px
@@ -51,10 +65,10 @@ basewidth = 900px
       height 24px
       background-image url(/assets/close.svg)
       background-repeat no-repeat
-      @media phone
+      @media (max-width: 650px)
         right auto
         left 10px
-        top 10px
+        top 0px
         color #30a213
         position absolute
         font-weight: bold;
@@ -76,9 +90,10 @@ basewidth = 900px
           top: 0;
 
 
-    .title
+    h3.title
       margin-left 0
       margin-right 0
+      font-size 23px
 
     button
       margin-left 0

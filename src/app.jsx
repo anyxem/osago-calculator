@@ -1,8 +1,9 @@
 import React from 'react';
 import { render } from 'react-dom';
 import $ from 'jquery';
+import InputElement  from 'react-input-mask';
 
-import DropDown, { Item } from './components/Dropdown'
+import DropDown, { Item } from './components/Dropdown';
 
 import './app.styl';
 import './components/Checkboxes.styl';
@@ -54,6 +55,8 @@ class App extends React.Component {
       nameErr: false,
       phone: null,
       phoneErr: false,
+      callbackTriggerSend: window.callbackTriggerSend || null,
+      callbackTriggerCalc: window.callbackTriggerCalc || null,
     };
 
     this.addDriver = this.addDriver.bind(this);
@@ -75,7 +78,7 @@ class App extends React.Component {
       err.nameErr = true;
     }
 
-    if(this.state.phone === null || this.state.phone.length < 1){
+    if(this.state.phone === null || this.state.phone.toString().length < 1){
       err.phoneErr = true;
     }
 
@@ -83,6 +86,75 @@ class App extends React.Component {
       this.setState(err);
       return;
     }
+
+
+let regions = {};
+for( let row in CITIES ){
+  regions[row] = {label: CITIES[row][0][3] };
+}
+
+let citiesOfRegion = {};
+for( let i = 0; i < CITIES[this.state.region].length ; i++ ){
+  citiesOfRegion[i] = { label: CITIES[this.state.region][i][0] };
+}
+
+    let payloadinfo = []
+    payloadinfo = [
+      {
+        key: `Собственник транспортного средства`,
+        label: OWNER[this.state.ownerIsJur].label
+      },
+      {
+        key: `Регион прописки собственника`,
+        label: regions[this.state.region].label
+      },
+      {
+        key: `Город`,
+        label: citiesOfRegion[this.state.city].label
+      },
+      {
+        key: `Транспортное средство`,
+        label: TS[this.state.ts].label
+      },
+      {
+        key: `Мощность двигателя`,
+        label: POWER[this.state.power].label
+      },
+      {
+        key: `Период использования`,
+        label: RANGE[this.state.range].label
+      },
+      {
+        key: `Будет использоваться с прицепом`,
+        label: ( this.state.withTrailer ? 'да' : 'нет' ),
+      },
+    ];
+
+
+    if(this.state.multiDriver){
+      payloadinfo.push({
+        key: `Водители`,
+        label: 'Будет использоваться мультидрайв'
+      });
+    }else{
+      payloadinfo.push({
+        key: `Водители`,
+        label: `${ this.state.driverList.map(function(item,index){
+          return (`
+            ${~~index+1}<br/>
+            Возраст: ${AGE[item.age].label} <br/>
+            Опыт: ${EXPERIENCE[item.experience].label} <br/>
+            КБМ: ${BMS[item.bms].label} <br/>
+            `);
+        }).join('') }`
+      });
+    }
+
+    payload = payloadinfo.map(function(item,index){
+      return (~~index+1)+'. '+item.key+': '+item.label+'<br/>';
+    }).join('\n');
+
+
 
     let multiplies = []
     multiplies = [
@@ -153,32 +225,44 @@ class App extends React.Component {
       totalMultiplier = 3*CITIES[this.state.region][this.state.city][(this.state.ts == 11 ? 2 : 1)];
     }
 
-    payload = multiplies.map(function(item){
-      return item.key+' '+item.label+' '+item.value;
-    }).join('\n');
+
+    payload = payload + '<br/>Стоимость: ' + ((
+      typeof this.state.base === 'number'
+      ?
+      (this.state.base*totalMultiplier).toFixed(2).replace('.',',')
+      :
+      ((this.state.base[0]*totalMultiplier).toFixed(2).replace('.',',')+' - '+(this.state.base[1]*totalMultiplier).toFixed(2).replace('.',','))
+      )+'₽');
+
+      try {
+        if (typeof this.state.callbackTriggerSend === 'function') {
+          this.state.callbackTriggerSend();
+        }
+      } catch (e){}
 
     $.ajax({
-				url: this.state.sender,
-				type: "post",
-				data:({
-					name:this.state.name,
-					contact:this.state.phone,
-					calcId:this.state.calcId,
-					result:payload
-				}),
+      url: this.state.sender,
+      type: "post",
+      context: this,
+      data:({
+				name:this.state.name,
+				contact:this.state.phone,
+				calcId:this.state.calcId,
+				result:payload
+			}),
 
-				beforeSend: function( ) {
-					$(".window .response").text('Отправка...');
-				},
-				success: function( data ) {
-
-					$(".window .response").text( data );
-				},
-				error: function (xhr, ajaxOptions, thrownError) {
-          console.log(xhr);
-					$(".window .response").html( xhr.responseText );
-				}
-			});
+			beforeSend: function( ) {
+				$(".window .response").text('Отправка...');
+			},
+			success: function( data ) {
+        this.setState({'view':'sent'});
+				$(".window .response").text( data );
+			},
+			error: function (xhr, ajaxOptions, thrownError) {
+        console.log(xhr);
+				$(".window .response").html( xhr.responseText );
+			}
+		});
 
   }
 
@@ -504,7 +588,7 @@ class App extends React.Component {
         <h3 className="title">Список водителей</h3>
 
         <div className="form-group -full">
-          <input type="checkbox" onChange={this.toggleDriver}  disabled={this.state.ownerIsJur===1?'disabled':''} id="multiDriver" />
+          <input type="checkbox" onChange={this.toggleDriver} checked={this.state.multiDriver?'checked':''} disabled={this.state.ownerIsJur===1?'disabled':''} id="multiDriver" />
           <label htmlFor="multiDriver">Неограниченное число водителей (мультидрайв)</label>
         </div>
         {
@@ -574,22 +658,30 @@ class App extends React.Component {
         }
 
 
-        <button onClick={(e)=>{$('html,body').animate({scrollTop: $("#root").offset().top},'slow');this.setState({ view: 'result' }) }}>Рассчитать</button>
+        <button onClick={(e)=>{
+          try {
+            if (typeof this.state.callbackTriggerCalc === 'function') {
+              this.state.callbackTriggerCalc();
+            }
+          } catch (e){}
+          $('html,body').animate({scrollTop: $("#root").offset().top},'slow');
+          this.setState({ view: 'result' });
+        }}>Рассчитать</button>
         </div>
       );
     }
     else if (this.state.view == 'result' || this.state.view == 'order'){
       view = (
         <div>
-        <h2 className="title">Стоимость полиса ОСАГО</h2>
+        <h2 className="title">Стоимость полиса ОСАГО:</h2>
 
         <div className="price">
         {
           typeof this.state.base === 'number'
           ?
-          (this.state.base*totalMultiplier).toFixed(2)
+          (this.state.base*totalMultiplier).toFixed(2).replace('.',',')
           :
-          ((this.state.base[0]*totalMultiplier).toFixed(2)+' - '+(this.state.base[1]*totalMultiplier).toFixed(2))
+          ((this.state.base[0]*totalMultiplier).toFixed(2).replace('.',',')+' - '+(this.state.base[1]*totalMultiplier).toFixed(2).replace('.',','))
         }
         {` `}₽</div>
 
@@ -633,26 +725,28 @@ class App extends React.Component {
 
     let modal = null;
 
-    if(this.state.view == 'order'){
+    if(this.state.view == 'order' || this.state.view == 'sent'){
       modal = (
         <div className="overlay">
           <div className="window">
-            <a href="#" onClick={(e)=>{e.preventDefault();this.setState({view:'result'})}} className="close">Назад</a>
-            <h2 className="title">Заказать полис ОСАГО с бесплатной доставкой</h2>
-            <div className="row-group">
+            <a href="#" onClick={(e)=>{e.preventDefault();$('html,body').animate({scrollTop: $("#root").offset().top},'slow');this.setState({view:'result'})}} className="close">Назад</a>
+            <h3 className="title">Перезвоним для уточнения стоимости, страховой компании и способа доставки</h3>
+            <div className="row-group" style={this.state.view == 'sent'?{display:'none'}:{}}>
               <div className="form-group -full">
                 <div className="title">Имя</div>
-                <input type="text" ref="name" className={this.state.nameErr?'error':''} value={this.state.name} onChange={(e)=>(this.setState({name:e.target.value, nameErr: false}))} placeholder="Иванов Иван Иванович" />
+                <input type="text" ref="name" className={this.state.nameErr?'error':''} value={this.state.name}
+                onChange={(e)=>(this.setState({name:e.target.value, nameErr: false}))} placeholder="Иванов Иван Иванович" />
               </div>
             </div>
-            <div className="row-group">
+            <div className="row-group" style={this.state.view == 'sent'?{display:'none'}:{}}>
               <div className="form-group -full">
                 <div className="title">Телефон</div>
-                <input type="text" ref="phone" className={this.state.phoneErr?'error':''} value={this.state.phone} onChange={(e)=>(this.setState({phone:e.target.value, phoneErr: false}))}  placeholder="+7(900)000-00-00" />
+                <InputElement mask="+7-999-999-99-99" defaultValue="7" type="text" ref="phone" className={this.state.phoneErr?'error':''} value={this.state.phone}
+                onChange={(e)=>{this.setState({phone:e.target.value,phoneErr: false})}}  placeholder="+7-900-000-00-00" />
               </div>
             </div>
-            <button onClick={this.sendOrder}>Заказать полис</button>
-            <div className="note">Ваши персональные данные не будут переданы третьим лицам</div>
+            <button onClick={this.sendOrder} style={this.state.view == 'sent'?{display:'none'}:{}}>Заказать полис</button>
+            <div className="note" style={this.state.view == 'sent'?{display:'none'}:{}}>Ваши персональные данные не будут переданы третьим лицам</div>
             <div className="response"></div>
           </div>
         </div>

@@ -1,3 +1,8 @@
+phone = "(max-width: 540px)";
+tablet = "(max-width: 768px)";
+middle = "(min-width: 991px) and (max-width: 1199px)";
+basewidth = 900px
+
 .calculator-osago
   .dropdown
     position relative
@@ -12,6 +17,14 @@
       border-radius 2px
       transition all .3s
       white-space nowrap
+      @media middle
+        padding-left 10px
+        padding-right 10px
+        background-position top 50% right 10px
+      @media tablet
+        padding-left 10px
+        padding-right 10px
+        background-position top 50% right 10px
     .dropdown-options
       display none
       position: absolute;
@@ -29,6 +42,12 @@
         max-height: 380px
         overflow auto
         padding 0 20px
+        @media middle
+          padding-left 0
+          padding-right 0
+        @media tablet
+          padding-left 0
+          padding-right 0
         li
           text-decoration none
           cursor: pointer;
@@ -47,3 +66,9 @@
       cursor pointer
       .dropdown-label
         border-color #30a213
+  .-half
+    .dropdown
+      .dropdown-options
+        ul
+          li
+            white-space nowrap

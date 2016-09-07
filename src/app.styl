@@ -119,12 +119,22 @@ basewidth = 900px
         width 0
     &.-half
       width percentage(120px / basewidth)
+      @media tablet
+        width percentage(160px / basewidth)
       @media phone
-        width 40%
+        width percentage(430px / basewidth)
+        &:nth-child(2)
+          float right
+          margin-right -1.5%
+
     &.-double
       width percentage(570px / basewidth)
+      @media tablet
+        width percentage(490px / basewidth)
       &.-minusone
         width percentage(530px / basewidth)
+        @media tablet
+          width percentage(450px / basewidth)
         @media phone
           width 90%
       @media phone
@@ -142,6 +152,8 @@ basewidth = 900px
       color #8996ab
       margin-bottom 14px
       white-space nowrap
+      @media tablet
+        margin-bottom 7px
 
   .price
     font-size: 71px;
@@ -185,6 +197,7 @@ basewidth = 900px
         font-size 14px
         white-space: pre-line;
         color #8996ab
+        height 80px
         @media phone
           width 50%
           display inline-block
